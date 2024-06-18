@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Access Control</title>
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for( 'static', filename='css/style.css', v=1)}}">
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <meta name="theme-color" content="#7952b3">
+
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+        .custom-context-menu {
+        display: none;
+        position: absolute;
+        z-index: 1000;
+        padding: 10px;
+        background-color: white;
+        border: solid 1px #ddd;
+
+      }
+    </style>
+
+  </head>
+  <body>
+
+  <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow" style="">
+    <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="/">AccessControl</a>
+    <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Перемикання навігації">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <form action="/search" method="get" class="form-control form-control-dark w-100" role="search">
+      <input class="w-100 search" name="query" type="text" placeholder="Пошук" aria-label="Пошук">
+    </form>
+    <div class="navbar-nav" >
+    </div>
+  </header>
+
+  <div class="container-fluid">
+    <div class="row">
+      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+        <div class="position-sticky pt-3">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="/">
+                <span data-feather="home"></span>
+                Фізичні особи
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/all_pass">
+                <span data-feather="file"></span>
+                Перепустки
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/all_cp">
+                <span data-feather="users"></span>
+                Контрагенти
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/all_storage">
+                <span data-feather="bar-chart-2"></span>
+                Об'єкти
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 class="h2">Перепустка на {{ person.m_name + " " + person.f_name + " " + person.l_name}}</h1>
+        </div>
+        <div class="row g-3">
+                        <div class="col-sm-4">
+                            <label for="f_name" class="form-label">Прізвище</label>
+                            <input type="text" name="m_name" class="form-control" id="m_name"  value="{{ person.m_name }}" disabled>
+                        </div>
+                        <div class="col-sm-4">
+                            <label for="f_name" class="form-label">Ім'я</label>
+                            <input type="text" name="f_name" class="form-control" id="f_name" value="{{ person.f_name }}"  disabled>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <label for="l_name" class="form-label">По батькові</label>
+                            <input type="text" name="l_name" class="form-control" id="l_name" value="{{ person.l_name }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">Адреса</label>
+                            <input type="text" name="address" class="form-control" id="address"  value="{{ person.address }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Номер телефону</label>
+                            <input type="tel" name="phone" class="form-control" id="phone" placeholder="" value="{{ person.phone }}" disabled>
+                        </div>
+                        <hr>
+                        <div class="col-md-6">
+                            <label for="counterpartie" class="form-label">Контрагент</label>
+                            <input type="text" name="counterpartie" class="form-control" id="counterpartie" placeholder="" value="{{ p.counterpartie }}" disabled>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="car_number" class="form-label">Номер авто</label>
+                                    <input type="text" name="car_number" class="form-control" id="car_number" placeholder="" value="{{ p.car_number }}" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Рівень доступу</label>
+                                    <div class="form-check">
+                                        <input id="opening" name="access_level[]" type="checkbox" class="form-check-input" value="1" {% if '1' in arr %} checked {% endif %} disabled>
+                                        <label class="form-check-label" for="opening">Відкриття</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input id="takeaway" name="access_level[]" type="checkbox" class="form-check-input" value="2" {% if '2' in arr %} checked {% endif %} disabled>
+                                        <label class="form-check-label" for="takeaway">Виніс збереженого</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input id="passage" name="access_level[]" type="checkbox" class="form-check-input" value="3" {% if '3' in arr %} checked {% endif %} disabled>
+                                        <label class="form-check-label" for="passage">Прохід</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="objects" class="form-label">Об'єкти</label>
+                            <div class="form-group">
+                                <textarea class="form-control" name="objects" id="objects" rows="6" disabled>{{ p.storages }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="issue_date" class="form-label">Перепустка дійсна від</label>
+                            <input type="datetime-local" name="issue_date" class="form-control" id="issue_date" placeholder="" value="{{ p.issue_date }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="valid_until" class="form-label">Перепустка дійсна до</label>
+                            <input type="datetime-local" name="valid_until" class="form-control" id="valid_until" placeholder="" value="{{ p.valid_until }}" disabled>
+                        </div>
+                    </div>
+          <a class="btn w-100 btn-outline-info" style="margin-top: 20px;" href="/download/{{ p.id }}" download>Завантажити перепустку</a>
+      </main>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
+  </script>
+  </body>
+</html>

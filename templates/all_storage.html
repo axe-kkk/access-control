@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Access Control</title>
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for( 'static', filename='css/style.css', v=1)}}">
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <meta name="theme-color" content="#7952b3">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+        .custom-context-menu {
+        display: none;
+        position: absolute;
+        z-index: 1000;
+        padding: 10px;
+        background-color: white;
+        border: solid 1px #ddd;
+
+      }
+    </style>
+
+    <style>
+    .node-item > .content-container {
+        position: relative;
+        padding-left: 20px;
+    }
+
+    .node-item > .content-container.has-children::before {
+        content: '▸';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: transform 0.3s ease-in-out;
+        cursor: pointer;
+    }
+
+    .node-item.open > .content-container.has-children::before {
+        transform: translateY(-50%) rotate(90deg);
+    }
+
+    .node-item > .content-container:not(.has-children) {
+        color: #007bff; /* Змініть колір на той, який вам потрібен */
+    }
+    /* Загальні стилі для списку */
+    ul {
+        list-style-type: none; /* Прибираємо маркери списку */
+        padding-left: 20px; /* Відступ для вкладеності */
+    }
+
+    /* Стилі для елементів списку */
+    .node-item {
+        margin: 5px 0;
+        padding: 5px;
+        border-radius: 5px;
+        transition: background-color 0.3s; /* Анімація для підсвічування */
+    }
+
+    /* Підсвічування при наведенні */
+    .node-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    /* Стилі для активного елемента */
+    .node-item.active,
+    .selected { /* Додатковий клас для вибраних елементів */
+        background-color: #add8e6;
+    }
+
+    /* Стилізація курсора */
+    .content-container {
+        cursor: pointer;
+    }
+
+    /* Стилі для приховування/відображення дочірніх елементів */
+    .node-item > ul {
+        display: none; /* Приховування за замовчуванням */
+    }
+
+    .node-item.open > ul {
+        display: block; /* Відображення при розкритті */
+    }
+
+
+</style>
+</head>
+<body>
+
+<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+    <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="/">AccessControl</a>
+    <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="navbar-nav">
+        <form class="form-control"><div style="padding-top: 11px; padding-bottom:11px;" class="w-100"></div></form>
+    </div>
+</header>
+
+<div class="container-fluid">
+    <div class="row">
+      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+        <div class="position-sticky pt-3">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="/">
+                <span data-feather="home"></span>
+                Фізичні особи
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/all_pass">
+                <span data-feather="file"></span>
+                Перепустки
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/all_cp">
+                <span data-feather="users"></span>
+                Контрагенти
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/all_storage">
+                <span data-feather="bar-chart-2"></span>
+                Об'єкти
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 class="h2">Об'єкти</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <a type="button" href="/add_child/0" class="btn btn-sm btn-outline-secondary">
+                    <span data-feather="calendar"></span>
+                    Додати батьківський об'єкт
+                </a>
+            </div>
+        </div>
+        <ul>
+        {% macro render_node(node) %}
+            <li class="node-item">
+                <div class="content-container" data-nodeid="{{ node.object_id }}" {% if not node.children %}onclick="selectNode(event, '{{ node.object_id }}');" {% endif %}style="cursor:pointer;">
+                    <!-- Зміни тут для вибору тільки самих дочірніх елементів -->
+                    <span data-selectable="{{ 'true' if not node.children else 'false' }}" data-nodeid="{{ node.object_id }}">
+                        {{ node.name }}
+                    </span>
+                </div>
+                {% if node.children %}
+                    <ul id="children-{{ node.object_id }}" style="display: none;">
+                        {% for child in node.children %}
+                            {{ render_node(child) }}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endmacro %}
+            <ul>
+                {% for node in nodes %}
+                    {{ render_node(node) }}
+                {% endfor %}
+            </ul>
+        </ul>
+          <div class="custom-context-menu" id="contextMenu">
+            <a type="button" href="#" class="btn btn-sm btn-outline-warning">Додати дочірній об'єкт</a>
+            <a type="button" href="#" class="btn btn-sm btn-outline-danger">Видалити</a>
+          </div>
+      </main>
+    </div>
+  </div>
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+    window.toggleChildren = function(event, elementId) {
+        event.stopPropagation();
+        var children = document.getElementById(elementId);
+        var container = event.currentTarget.closest('.node-item');
+        if (children.style.display === 'none') {
+            children.style.display = 'block';
+            localStorage.setItem(elementId, 'block');
+            container.classList.add('open');
+        } else {
+            children.style.display = 'none';
+            localStorage.setItem(elementId, 'none');
+            container.classList.remove('open');
+        }
+    }
+    window.selectNode = function(event, objectId) {
+        event.stopPropagation();
+        window.location.href = `/storage/${objectId}`;
+    }
+    document.querySelectorAll('.node-item > .content-container').forEach(function(container) {
+        if (container.nextElementSibling && container.nextElementSibling.tagName === 'UL') {
+            container.classList.add('has-children');
+        }
+        container.addEventListener('click', function(event) {
+            const objectId = container.getAttribute('data-nodeid') || event.target.getAttribute('data-nodeid');
+            if (container.classList.contains('has-children')) {
+                const elementId = 'children-' + objectId;
+                toggleChildren(event, elementId);
+            } else {
+                selectNode(event, objectId);
+            }
+        });
+    });
+});
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.node-item > .content-container').forEach(function(container) {
+        container.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            const objectId = container.getAttribute('data-nodeid');
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.style.top = `${e.pageY}px`;
+            document.querySelector('a.btn-outline-warning').href = `/add_child/${objectId}`;
+            document.querySelector('a.btn-outline-danger').href = `/delete/${objectId}`;
+
+            e.stopPropagation();
+        });
+    });
+    document.addEventListener('click', () => {
+        document.getElementById('contextMenu').style.display = 'none';
+    });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
+</script>
+</body>
+</html>
